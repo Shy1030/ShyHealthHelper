@@ -1,0 +1,122 @@
+page {
+  background: #f8f2f1;
+  color: #302428;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.page {
+  padding: 24rpx 28rpx 180rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fffdfc;
+  border: 1rpx solid rgba(120, 82, 96, 0.12);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 16rpx 44rpx rgba(96, 54, 72, 0.08);
+  margin-bottom: 26rpx;
+}
+
+.muted {
+  color: #8f7d83;
+  font-size: 24rpx;
+}
+
+.label {
+  display: block;
+  font-size: 24rpx;
+  color: #8f7d83;
+  margin-bottom: 12rpx;
+}
+
+.field {
+  margin-bottom: 28rpx;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+input {
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: #fdf7f6;
+  border: 1rpx solid rgba(120, 82, 96, 0.12);
+  border-radius: 22rpx;
+  font-size: 30rpx;
+  color: #302428;
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.row .half {
+  flex: 1;
+  min-width: 0;
+}
+
+.picker-value {
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: #fdf7f6;
+  border: 1rpx solid rgba(120, 82, 96, 0.12);
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  font-size: 28rpx;
+  color: #302428;
+}
+
+.segmented {
+  display: flex;
+  gap: 8rpx;
+  padding: 8rpx;
+  background: #f5ecee;
+  border-radius: 26rpx;
+  margin-bottom: 26rpx;
+}
+
+.seg {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  border-radius: 20rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #8f7d83;
+}
+
+.seg.active {
+  background: #fff;
+  color: #a63a57;
+  box-shadow: 0 6rpx 18rpx rgba(96, 54, 72, 0.1);
+}
+
+.save-btn {
+  margin-top: 10rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(135deg, #c94f6d, #b23e60);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 700;
+  box-shadow: 0 16rpx 34rpx rgba(201, 79, 109, 0.26);
+}
+
+.save-btn::after {
+  border: none;
+}
+
+.empty {
+  text-align: center;
+  color: #8f7d83;
+  font-size: 26rpx;
+  padding: 60rpx 0;
+}

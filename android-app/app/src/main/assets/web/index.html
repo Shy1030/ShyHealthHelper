@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d96b84">
+  <meta name="description" content="ShyHealthHelper：月经记录与预测、饮食营养估算、运动建议与健康管理的个人助手">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ShyHealthHelper">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  <script>
+    try {
+      var savedTheme = localStorage.getItem("mooncare-theme");
+      var alias = { forest: "mint", sunset: "amber" };
+      if (alias[savedTheme]) savedTheme = alias[savedTheme];
+      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+    } catch (error) {}
+  </script>
+  <link rel="stylesheet" href="/styles.css">
+  <title>ShyHealthHelper · 健康助手</title>
+</head>
+<body>
+  <div class="bg-orb bg-orb--one" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--two" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 13.2A9 9 0 1 1 10.8 3a7.2 7.2 0 0 0 10.2 10.2z"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <h1>ShyHealthHelper</h1>
+          <p>你的周期健康助手</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <select id="themeSelect" class="theme-select" aria-label="界面颜色">
+          <option value="rose">玫瑰</option>
+          <option value="ocean">海洋</option>
+          <option value="mint">薄荷</option>
+          <option value="lavender">薰衣草</option>
+          <option value="amber">琥珀</option>
+        </select>
+        <span class="mode-badge" id="modeBadge"><i></i><span>检测中</span></span>
+      </div>
+    </header>
+
+    <main>
+      <!-- 首页 -->
+      <section class="page is-active" id="page-home">
+        <div class="hello">
+          <p class="hello-date" id="homeDate"></p>
+          <h2 id="homeGreeting">你好</h2>
+        </div>
+
+        <div class="card home-today-card">
+          <div class="card-head">
+            <h3>今日概览</h3>
+            <span class="hint" id="homeTodayDate"></span>
+          </div>
+          <div id="homeToday"><div class="empty-state">加载今日数据…</div></div>
+        </div>
+
+        <div class="card hidden" id="homeExercisePlan"></div>
+
+        <div id="heroCard"></div>
+        <div class="grid-2 period-stats" id="homeStats"></div>
+        <div id="reminders" class="reminder-stack"></div>
+
+        <div class="card profile-snapshot" id="profileSnapshot"></div>
+
+        <div class="card notify-card hidden">
+          <div>
+            <h3>周期提醒</h3>
+            <p class="muted">开启浏览器通知，在月经临近和易孕期提醒你。</p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-small" id="notifyBtn">开启提醒</button>
+        </div>
+      </section>
+
+      <!-- 月经 -->
+      <section class="page" id="page-period">
+        <div class="section-title">
+          <h2>月经记录</h2>
+          <p>点日历只选择日期，按记录按钮才会保存</p>
+        </div>
+
+        <div class="period-quick-record">
+          <div>
+            <strong>记录本次月经</strong>
+            <p class="muted small">日历只用于查看；点击按钮进入专门的日期选择界面。</p>
+          </div>
+          <button type="button" class="btn btn-primary btn-small" id="openPeriodRecord">记录月经</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>周期日历</h3>
+            <div class="month-nav">
+              <button type="button" id="calPrev" aria-label="上个月">‹</button>
+              <span id="calLabel"></span>
+              <button type="button" id="calNext" aria-label="下个月">›</button>
+            </div>
+          </div>
+          <div class="weekdays">
+            <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+          </div>
+          <div class="calendar" id="calendarGrid"></div>
+          <div class="legend">
+            <span><i class="dot dot--actual"></i>经期记录</span>
+            <span><i class="dot dot--predicted"></i>预测经期</span>
+            <span><i class="dot dot--fertile"></i>易孕期</span>
+            <span><i class="dot dot--ovulation"></i>排卵日</span>
+          </div>
+          <p class="muted small">日历仅供查看，点击日期不会记录；请使用上方「记录月经」按钮。</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>周期预测详情</h3>
+            <span class="hint" id="predictionMethod"></span>
+          </div>
+          <div id="predictionDetail">
+            <div class="empty-state">记录经期后显示拟合结果</div>
+          </div>
+        </div>
+
+        <div class="card hidden" id="periodFormCard">
+          <div class="card-head">
+            <h3 id="periodFormTitle">记录月经</h3>
+            <button type="button" id="periodCancel" class="link-btn">关闭</button>
+          </div>
+          <form id="periodForm">
+            <div class="field-row">
+              <label class="field">开始日期
+                <input type="date" id="periodStart" required>
+              </label>
+              <label class="field">结束日期
+                <input type="date" id="periodEnd">
+              </label>
+            </div>
+            <div class="field">
+              <span class="field-label">经量</span>
+              <div class="segmented" id="flowSegmented">
+                <button type="button" data-value="light">少</button>
+                <button type="button" data-value="medium" class="is-selected">中</button>
+                <button type="button" data-value="heavy">多</button>
+              </div>
+            </div>
+            <label class="field">症状
+              <input type="text" id="periodSymptoms" maxlength="200" placeholder="如：痛经、腰酸、情绪波动">
+            </label>
+            <label class="field">备注
+              <input type="text" id="periodNotes" maxlength="500" placeholder="可选">
+            </label>
+            <button type="submit" class="btn btn-primary" id="periodSubmit">记录月经</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>历史记录</h3><span class="hint" id="periodCount"></span></div>
+          <div class="list" id="periodHistory"></div>
+        </div>
+      </section>
+
+      <!-- 饮食 -->
+      <section class="page" id="page-diet">
+        <div class="section-title">
+          <h2>饮食营养</h2>
+          <p>按日统计热量，结合运动记录推荐下一餐和今日运动</p>
+        </div>
+
+        <div class="card diet-daily-card">
+          <div class="card-head">
+            <h3>当日热量与推荐</h3>
+            <input type="date" id="dietDailyDate">
+          </div>
+          <div id="dietDailySummary">
+            <div class="empty-state">正在读取今日饮食…</div>
+          </div>
+          <button type="button" class="btn btn-primary" id="dietRecommend">推荐下一餐 / 今日运动</button>
+          <div id="dietRecommendResult"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>记录这一餐</h3>
+            <span class="hint" id="dietModeHint"></span>
+          </div>
+          <form id="dietForm">
+            <label class="photo-picker" id="photoPicker">
+              <input type="file" accept="image/*" capture="environment" id="dietPhoto">
+              <img id="dietPreview" class="hidden" alt="餐食照片">
+              <div class="photo-placeholder" id="photoPlaceholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                  <circle cx="12" cy="13" r="3.5"/>
+                </svg>
+                <span>拍照 / 选择照片</span>
+                <small>DeepSeek 可识别照片中的食物，也可补充文字描述</small>
+              </div>
+            </label>
+            <label class="field">补充描述（可选）
+              <textarea id="dietDescription" rows="3" maxlength="500" placeholder="可补充份量与口味，例如：一碗米饭、清蒸鲈鱼、少油"></textarea>
+            </label>
+            <div class="field">
+              <span class="field-label">餐次</span>
+              <div class="segmented" id="mealSegmented">
+                <button type="button" data-value="breakfast">早餐</button>
+                <button type="button" data-value="lunch" class="is-selected">午餐</button>
+                <button type="button" data-value="dinner">晚餐</button>
+                <button type="button" data-value="snack">加餐</button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="dietSubmit">估算营养并给出建议</button>
+          </form>
+        </div>
+
+        <div id="dietResult"></div>
+
+        <div class="card">
+          <div class="card-head"><h3>饮食记录</h3><span class="hint">最近 20 条</span></div>
+          <div class="list" id="dietHistory"></div>
+        </div>
+      </section>
+
+      <!-- 运动 -->
+      <section class="page" id="page-exercise">
+        <div class="section-title">
+          <h2>运动与身体数据</h2>
+          <p>记录运动与体重变化，结合月经周期生成训练计划</p>
+        </div>
+
+        <details class="card collapsible" id="profileDetails">
+          <summary class="collapsible-summary">
+            <h3>身体档案</h3>
+            <span class="collapsible-hint"></span>
+          </summary>
+          <div class="collapsible-content">
+            <div class="field-row">
+              <label class="field">出生年份
+                <input type="number" id="profileBirthYear" min="1900" max="2026" inputmode="numeric" placeholder="1998">
+              </label>
+              <label class="field">身高 (cm)
+                <input type="number" id="profileHeight" min="80" max="250" step="0.1" inputmode="decimal" placeholder="165">
+              </label>
+            </div>
+            <div class="field-row">
+              <label class="field">体重 (kg)
+                <input type="number" id="profileWeight" min="25" max="300" step="0.1" inputmode="decimal" placeholder="55">
+              </label>
+              <label class="field">活动水平
+                <select id="profileActivity">
+                  <option value="sedentary">久坐少动</option>
+                  <option value="light" selected>轻度活动</option>
+                  <option value="moderate">中度活动</option>
+                  <option value="active">高度活动</option>
+                  <option value="very_active">运动员级</option>
+                </select>
+              </label>
+            </div>
+            <div class="field-row">
+              <label class="field">目标
+                <select id="profileGoal">
+                  <option value="lose">减脂</option>
+                  <option value="maintain" selected>保持</option>
+                  <option value="gain">增肌</option>
+                </select>
+              </label>
+              <label class="field">伤病 / 限制
+                <input type="text" id="profileInjuries" maxlength="500" placeholder="如：膝盖不适">
+              </label>
+            </div>
+            <div class="field-row">
+              <label class="field">目标体重 (kg)
+                <input type="number" id="profileTargetWeight" min="25" max="300" step="0.1" inputmode="decimal" placeholder="50">
+              </label>
+              <label class="field">期望完成日期
+                <input type="date" id="profileTargetDate">
+              </label>
+            </div>
+            <div class="chips" id="metricsChips"></div>
+            <div class="goal-plan" id="goalPlan"></div>
+            <button type="button" class="btn btn-primary" id="saveProfile">保存身体档案</button>
+          </div>
+        </details>
+
+        <details class="card collapsible" id="bodyDetails">
+          <summary class="collapsible-summary">
+            <h3>体重与身体变化</h3>
+            <span class="hint" id="bodyTrendHint"></span>
+            <span class="collapsible-hint"></span>
+          </summary>
+          <div class="collapsible-content">
+            <form id="bodyForm">
+              <div class="field-row">
+                <label class="field">日期
+                  <input type="date" id="bodyDate" required>
+                </label>
+                <label class="field">体重 (kg)
+                  <input type="number" id="bodyWeight" min="25" max="300" step="0.1" inputmode="decimal" placeholder="55.0">
+                </label>
+              </div>
+              <div class="field-row">
+                <label class="field">体脂率 (%)
+                  <input type="number" id="bodyFat" min="1" max="70" step="0.1" inputmode="decimal" placeholder="24.0">
+                </label>
+                <label class="field">腰围 (cm)
+                  <input type="number" id="bodyWaist" min="30" max="250" step="0.1" inputmode="decimal" placeholder="68">
+                </label>
+              </div>
+              <div class="field-row">
+                <label class="field">睡眠 (小时)
+                  <input type="number" id="bodySleep" min="0" max="24" step="0.1" inputmode="decimal" placeholder="7.5">
+                </label>
+                <label class="field">静息心率
+                  <input type="number" id="bodyRestingHr" min="30" max="220" step="1" inputmode="numeric" placeholder="62">
+                </label>
+              </div>
+              <div class="field-row">
+                <label class="field">步数
+                  <input type="number" id="bodySteps" min="0" max="200000" step="1" inputmode="numeric" placeholder="8000">
+                </label>
+                <label class="field">备注
+                  <input type="text" id="bodyNotes" maxlength="300" placeholder="可选">
+                </label>
+              </div>
+              <button type="submit" class="btn btn-primary">记录身体数据</button>
+            </form>
+            <div id="bodySummary"></div>
+            <div class="card-head body-history-head">
+              <h3>身体数据历史</h3>
+              <span class="hint" id="bodyCount"></span>
+            </div>
+            <div class="list" id="bodyHistory"></div>
+          </div>
+        </details>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>小米运动健康直连</h3>
+            <span class="hint" id="xiaomiStatusBadge">未连接</span>
+          </div>
+          <p class="muted">登录一次后自动同步步数、睡眠、体重和运动记录。账号密码加密保存在本机，不会上传给第三方。</p>
+          <div id="xiaomiConnected" class="hidden">
+            <div class="chips" id="xiaomiAccountChips"></div>
+            <div class="field-row">
+              <label class="field">同步最近
+                <select id="xiaomiSyncDays">
+                  <option value="7" selected>7 天</option>
+                  <option value="30">30 天</option>
+                  <option value="90">90 天</option>
+                </select>
+              </label>
+              <div class="field xiaomi-sync-action">
+                <button type="button" class="btn btn-primary" id="xiaomiSync">立即同步</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-small" id="xiaomiLogout">断开连接</button>
+          </div>
+          <form id="xiaomiLoginForm">
+            <div class="field-row">
+              <label class="field">小米账号
+                <input type="text" id="xiaomiUser" autocomplete="username" placeholder="手机号 / 邮箱 / 小米 ID">
+              </label>
+              <label class="field">密码
+                <input type="password" id="xiaomiPassword" autocomplete="current-password" placeholder="小米账号密码">
+              </label>
+            </div>
+            <label class="field">地区
+              <select id="xiaomiRegion">
+                <option value="cn" selected>中国大陆</option>
+                <option value="abroad">海外</option>
+              </select>
+            </label>
+            <button type="submit" class="btn btn-primary" id="xiaomiLoginBtn">连接小米运动健康</button>
+          </form>
+          <div id="xiaomiChallenge" class="hidden">
+            <p id="xiaomiChallengeText" class="muted"></p>
+            <img id="xiaomiCaptchaImage" class="hidden" alt="验证码">
+            <label class="field">验证码
+              <input type="text" id="xiaomiCode" autocomplete="one-time-code" placeholder="输入图片或短信/邮箱验证码">
+            </label>
+            <div class="field-row">
+              <button type="button" class="btn btn-primary" id="xiaomiVerifyBtn">提交验证码</button>
+              <button type="button" class="btn btn-ghost" id="xiaomiChallengeCancel">取消</button>
+            </div>
+          </div>
+          <div id="xiaomiResult"></div>
+          <p class="muted small">直连使用小米运动健康的登录态接口，非官方开放 API。接口可能随 App 更新失效；如遇到验证码或二次验证，按提示操作即可。</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>识图记录运动</h3>
+            <span class="hint" id="exerciseLogHint"></span>
+          </div>
+          <p class="muted">上传运动 App / 手环截图，由 DeepSeek 识别运动数据并保存；截图没有热量时会按体重和运动类型自动估算。</p>
+          <label class="photo-picker" id="exercisePhotoPicker">
+            <input type="file" accept="image/*" capture="environment" id="exerciseShot">
+            <img id="exercisePreview" class="hidden" alt="运动记录截图">
+            <div class="photo-placeholder" id="exercisePhotoPlaceholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2.5"/>
+                <path d="M7 14l3-3 2.5 2.5L15 10l2 2"/>
+                <circle cx="8" cy="8.5" r="1.2"/>
+              </svg>
+              <span>上传运动截图</span>
+              <small>支持跑步、骑行、力量训练等运动记录截图</small>
+            </div>
+          </label>
+          <label class="field">补充说明（可选）
+            <input type="text" id="exerciseShotNote" maxlength="200" placeholder="如：小米运动今天的记录">
+          </label>
+          <button type="button" class="btn btn-primary" id="analyzeExerciseShot">识别截图并保存</button>
+          <details class="result-details hidden" id="exerciseShotResultDetails">
+            <summary id="exerciseShotResultSummary">查看识别结果</summary>
+            <div id="exerciseLogResult"></div>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>用文字记录运动</h3>
+            <span class="hint" id="exerciseDescribeHint">忘记戴设备也能补录</span>
+          </div>
+          <p class="muted">直接描述运动，例如“快走 30 分钟，然后做了 20 分钟力量训练”。AI 会解析运动类型、时长，并按体重估算热量。</p>
+          <form id="exerciseDescribeForm">
+            <label class="field">日期
+              <input type="date" id="exerciseDescribeDate" required>
+            </label>
+            <label class="field">运动描述
+              <textarea id="exerciseDescribeText" rows="2" maxlength="500" placeholder="如：早上慢跑半小时，晚上做了 20 分钟深蹲和拉伸" required></textarea>
+            </label>
+            <button type="submit" class="btn btn-primary" id="exerciseDescribeSubmit">解析描述并记录</button>
+          </form>
+          <details class="result-details hidden" id="exerciseDescribeResultDetails">
+            <summary id="exerciseDescribeResultSummary">查看解析结果</summary>
+            <div id="exerciseDescribeResult"></div>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>运动历史</h3>
+            <span class="hint" id="exerciseLogCount"></span>
+          </div>
+          <div class="list" id="exerciseLogHistory"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>本周训练计划</h3>
+            <span class="hint" id="exercisePhase"></span>
+          </div>
+          <p class="muted">建议会随月经周期阶段变化。经期以恢复为主，黄体期适当降低强度。</p>
+          <label class="field">训练偏好与条件（可选）
+            <textarea id="exercisePlanPreferences" rows="3" maxlength="1000" placeholder="如：家里徒手训练、每周 3 天、每次 30 分钟、膝盖不适、想减脂"></textarea>
+          </label>
+          <div id="exerciseActivitySummary"></div>
+          <button type="button" class="btn btn-primary" id="generatePlan">生成个性化一周运动计划</button>
+          <div id="exerciseResult"></div>
+        </div>
+
+      </section>
+
+      <!-- AI 对话 -->
+      <section class="page" id="page-chat">
+        <div class="section-title">
+          <h2>AI 对话</h2>
+          <p>询问营养、饮食、运动与热量缺口，对话会记住最近的多轮内容</p>
+        </div>
+
+        <div class="card chat-card">
+          <div class="card-head">
+            <h3>和 DeepSeek 聊聊</h3>
+            <button type="button" class="link-btn" id="chatClear">清空对话</button>
+          </div>
+          <div class="chat-list" id="chatList">
+            <div class="empty-state">正在读取对话…</div>
+          </div>
+          <form id="chatForm" class="chat-input-row">
+            <textarea id="chatInput" rows="1" maxlength="2000" placeholder="例如：今天晚餐吃什么？还能做哪些运动？"></textarea>
+            <button type="submit" class="btn btn-primary" id="chatSend">发送</button>
+          </form>
+          <p class="muted small">对话会保存最近 20 轮作为上下文；营养和运动建议仅供参考，不构成医疗建议。</p>
+        </div>
+      </section>
+
+      <!-- AI 设置 -->
+      <section class="page" id="page-settings">
+        <div class="section-title">
+          <h2>AI 设置</h2>
+          <p>配置 DeepSeek API Key，启用真实照片识别和 AI 对话</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>DeepSeek</h3>
+            <span class="hint" id="aiStatus">读取中…</span>
+          </div>
+          <form id="aiSettingsForm">
+            <label class="field">API Key
+              <input type="password" id="aiKey" autocomplete="off" placeholder="sk-...（留空表示不修改已保存的 Key）">
+            </label>
+            <label class="field">Base URL
+              <input type="text" id="aiBaseUrl" placeholder="https://api.deepseek.com">
+            </label>
+            <div class="field-row">
+              <label class="field">文本模型
+                <input type="text" id="aiModel" placeholder="deepseek-flash">
+              </label>
+              <label class="field">视觉模型
+                <input type="text" id="aiVisionModel" placeholder="deepseek-flash">
+              </label>
+            </div>
+            <div class="settings-actions">
+              <button type="submit" class="btn btn-primary" id="aiSave">保存</button>
+              <button type="button" class="btn btn-ghost" id="aiTest">测试连接</button>
+              <button type="button" class="btn btn-ghost btn-small" id="aiClear">清除 Key</button>
+            </div>
+          </form>
+          <div id="aiSettingsResult"></div>
+          <p class="muted small">Key 只保存在本机应用数据中，用于饮食识别和 AI 对话；请勿在公用手机上保存。</p>
+        </div>
+      </section>
+
+      <!-- 记账 -->
+      <section class="page" id="page-finance">
+        <div class="section-title">
+          <h2>记账</h2>
+          <p>记录收支，微信小程序可同步同一份数据</p>
+        </div>
+
+        <div class="card finance-summary-card">
+          <div class="card-head">
+            <h3>本月收支</h3>
+            <input type="month" id="financeMonth">
+          </div>
+          <div class="summary-grid">
+            <div><span>支出</span><b id="sumExpense">¥0.00</b></div>
+            <div><span>收入</span><b id="sumIncome">¥0.00</b></div>
+            <div><span>结余</span><b id="sumBalance">¥0.00</b></div>
+          </div>
+          <div class="breakdown" id="expenseBreakdown"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>记一笔</h3></div>
+          <form id="financeForm">
+            <div class="segmented" id="financeTypeSegmented">
+              <button type="button" data-value="expense" class="is-selected">支出</button>
+              <button type="button" data-value="income">收入</button>
+            </div>
+            <div class="field-row">
+              <label class="field">金额 (元)
+                <input type="number" id="financeAmount" min="0.01" max="10000000" step="0.01" inputmode="decimal" required placeholder="0.00">
+              </label>
+              <label class="field">日期
+                <input type="date" id="financeDate" required>
+              </label>
+            </div>
+            <div class="field-row">
+              <label class="field">分类
+                <select id="financeCategory"></select>
+              </label>
+              <label class="field">备注
+                <input type="text" id="financeNote" maxlength="200" placeholder="可选">
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary">添加记录</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>账单明细</h3><span class="hint" id="financeCount"></span></div>
+          <div class="list" id="financeList"></div>
+        </div>
+
+        <div class="card wechat-card">
+          <h3>微信小程序记账</h3>
+          <p class="muted">项目内已附带 <code>wechat-miniprogram</code> 记账小程序，连接同一后端，数据与本页面实时同步。</p>
+          <code class="api-base" id="apiBaseText"></code>
+          <button type="button" class="btn btn-ghost btn-small" id="copyApiBtn">复制后端地址</button>
+          <p class="muted small">用微信开发者工具导入小程序目录，开发阶段勾选「不校验合法域名」。正式发布需使用 HTTPS 域名并在小程序后台配置。</p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="主导航">
+      <button type="button" class="tab is-active" data-tab="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span>首页</span>
+      </button>
+      <button type="button" class="tab" data-tab="period">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2s5.7 6 5.7 10a5.7 5.7 0 0 1-11.4 0c0-4 5.7-10 5.7-10z"/></svg>
+        <span>月经</span>
+      </button>
+      <button type="button" class="tab" data-tab="diet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <span>饮食</span>
+      </button>
+      <button type="button" class="tab" data-tab="exercise">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.2-5 3.6 10L15 12h6"/></svg>
+        <span>运动</span>
+      </button>
+      <button type="button" class="tab" data-tab="chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.2 9.2 0 0 1-3.6-.8L3 21l1.9-4.9A8.4 8.4 0 1 1 21 11.5z"/><path d="M8 11h8M8 14h5"/></svg>
+        <span>对话</span>
+      </button>
+      <button type="button" class="tab" data-tab="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span>设置</span>
+      </button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="loading-overlay hidden" id="loadingOverlay">
+    <div class="loading-box"><span class="spinner"></span><p id="loadingText">AI 正在分析…</p></div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

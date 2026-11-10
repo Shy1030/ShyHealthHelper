@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/finance/finance",
+    "pages/add/add"
+  ],
+  "window": {
+    "navigationBarTitleText": "ShyHealthHelper 记账",
+    "navigationBarBackgroundColor": "#f8f2f1",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f8f2f1",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,9 @@
+{
+  "desc": "ShyHealthHelper 微信记账小程序",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

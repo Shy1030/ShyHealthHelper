@@ -1,0 +1,53 @@
+<view class="page">
+  <view class="summary-card">
+    <view class="summary-head">
+      <text class="summary-title">本月收支</text>
+      <picker mode="date" fields="month" value="{{month}}" bindchange="onMonthChange">
+        <view class="month-picker">{{monthText}} ▾</view>
+      </picker>
+    </view>
+    <view class="summary-grid">
+      <view class="summary-item">
+        <text class="summary-label">支出</text>
+        <text class="summary-value">{{expenseText}}</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-label">收入</text>
+        <text class="summary-value">{{incomeText}}</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-label">结余</text>
+        <text class="summary-value {{balanceClass}}">{{balanceText}}</text>
+      </view>
+    </view>
+    <view class="breakdown" wx:if="{{categories.length}}">
+      <view class="breakdown-row" wx:for="{{categories}}" wx:key="category">
+        <text class="cat">{{item.category}}</text>
+        <view class="bar"><view class="bar-fill" style="width: {{item.percent}}%"></view></view>
+        <text class="amount">{{item.amountText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section-head">
+    <text class="section-title">账单明细</text>
+    <text class="muted">{{count}} 笔</text>
+  </view>
+
+  <view class="card list" wx:if="{{records.length}}">
+    <view class="record" wx:for="{{records}}" wx:key="id">
+      <view class="badge {{item.type === 'income' ? 'badge-income' : ''}}">{{item.badge}}</view>
+      <view class="record-main">
+        <view class="record-title">{{item.category}}<text wx:if="{{item.note}}"> · {{item.note}}</text></view>
+        <view class="record-sub">{{item.record_date}}{{item.sourceText}}</view>
+      </view>
+      <view class="record-right">
+        <text class="amount {{item.type}}">{{item.amountText}}</text>
+        <text class="delete" data-id="{{item.id}}" bindtap="onDelete">删除</text>
+      </view>
+    </view>
+  </view>
+  <view class="empty" wx:else>本月还没有记录</view>
+
+  <view class="fab" bindtap="onAdd">记一笔</view>
+</view>
